@@ -82,8 +82,9 @@ async def on_ready():
             top_num = min(len(sorted_user_char_tuples),5)
             for i in range(0,top_num):
                 stringbuilder = stringbuilder + (str(i+1) + ". " + sorted_user_char_tuples[i][0] + " (" + str(sorted_user_char_tuples[i][1]) + ")\n")
-        print(stringbuilder)
-        print(sorted(char_dict.keys()))
+        
+        await client.get_channel(stats_channel).send(stringbuilder)
+
     print("done")
     exit()
 
