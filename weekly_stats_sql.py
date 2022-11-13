@@ -9,7 +9,6 @@ async def on_ready():
     NUM_CHANNEL_TOP = 5
     NUM_POSTER_TOP = 5
 
-    global spcae_names
     print('Connected as: ' + client.user.name + "!")
     local_tz = pytz.timezone('US/Eastern')
     now = datetime.now().replace(tzinfo=local_tz)
