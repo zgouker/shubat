@@ -82,7 +82,7 @@ async def on_ready():
                                         AND post_date>'{cutoff_sql_string}'
                                         GROUP BY character_name, poster
                                         ORDER BY 3 DESC
-                                        LIMIT 5
+                                        LIMIT {NUM_POSTER_TOP}
                                         """)
             char_list = resp.fetchall()
             for count,char in enumerate(char_list):
