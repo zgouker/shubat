@@ -29,7 +29,6 @@ async def on_ready():
                         ORDER BY 2 DESC""")
         user_list = resp.fetchall()
 
-        channel = client.get_channel(int(ch))
         channel_name = client.get_channel(int(ch)).name
 
 
