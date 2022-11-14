@@ -1,4 +1,7 @@
 import discord, traceback, configparser,time, utils,asyncio,sqlite3,pytz
+import pandas as pd
+import matplotlib.pyplot as plt
+from datetime import datetime
 intents = discord.Intents(messages=True, guilds=True,message_content=True)
 client = discord.Client(intents=intents)
 
@@ -153,7 +156,7 @@ async def on_message_delete(message):
 
 @client.event
 async def on_message(message):
-    global pause
+    global pause,stats_channel,cursor
     if(str(message.channel.id) in channel_set and not pause):
         if(not pause):
             if("twitter.com" in message.content):
@@ -164,6 +167,67 @@ async def on_message(message):
                 await repost_detect(art_id,message)
         if(message.content=="!pause"):
             print("pause")
+    if(message.content[:6]=="!graph"):
+        char_list = message.content.split(" ")[1:]
+        resp = cursor.execute(f"""SELECT character_name, SUBSTR(post_date,0,9), COUNT(*) FROM art_character
+                                LEFT JOIN art_messages
+                                ON art_messages.art_id=art_character.art_id
+                                LEFT JOIN characters
+                                ON art_character.character_id=characters.character_id
+                                WHERE LENGTH(post_date)>10
+                                GROUP BY character_name, SUBSTR(post_date,0,9)
+                                """)
+        resp_list = resp.fetchall()
+
+        all_dates_by_char = {}
+        cumulative_count = {}
+        # date_count_by_char = {}
+        temp_date_set = [a for a in resp_list if a[1][2]=='-']
+        oldest_date = min([a[1] for a in temp_date_set])
+        newest_date = max([a[1] for a in temp_date_set])
+        print(sorted([a[1] for a in temp_date_set]))
+        for char in char_list:
+            all_dates_by_char[char] = {}
+            for item in [a for a in resp_list if a[0]==char]:
+                all_dates_by_char[char][item[1]] = item[2]
+
+            cumulative_count[char] = 0
+            # date_count_by_char[char] = {}
+
+        # print(all_dates_by_char["ina"])
+
+        datelist = pd.date_range(datetime.strptime(oldest_date,"%y-%m-%d"),datetime.strptime(newest_date,"%y-%m-%d"))
+        # print(datelist)
+
+        df = pd.DataFrame(columns=(["date"] + char_list))
+
+        for date in datelist:
+            for char in char_list:
+                formatted_date = date.strftime("%y-%m-%d")
+                if(formatted_date in all_dates_by_char[char]):
+                    cumulative_count[char] = cumulative_count[char] + all_dates_by_char[char][formatted_date]
+                    print(date, char, all_dates_by_char[char][formatted_date])
+                else:
+                    print(date, char, 0)
+
+
+
+
+
+
+                # print(formatted_date)
+                # print(all_dates_by_char[char].keys())
+
+                # print(date, char, all_dates_by_char[char][formatted_date])
+                # date_count_by_char[char][formatted_date] = cumulative_count[char]
+            df.loc[len(df.index)] = [date] + [cumulative_count[a] for a in cumulative_count.keys()]
+        # print(df)
+        plt.figure(figsize=(16,8), dpi=150)
+        for char in char_list:
+            df.set_index('date')[char].plot(label=char)
+        plt.legend()
+        plt.savefig('out.png')
+        await message.channel.send(file=discord.File("out.png"))
         
 
 print("Welcome to the bot!")
@@ -175,6 +239,7 @@ try:
     channel_set = [x.strip() for x in channel_set]
     token = config["bot"]["prod_token"]
     space_names = config["bot"]["space_names"].split(',')
+    stats_channel = int(config["bot"]["stats_channel"])
     print("Channels to watch: "+ str(channel_set))
     print("Settings loaded!")
     print("Connecting to db...")
