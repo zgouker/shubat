@@ -1,4 +1,4 @@
-import discord, traceback, configparser,time
+import discord, traceback, configparser,time, utils
 intents = discord.Intents(messages=True, guilds=True,message_content=True)
 client = discord.Client(intents=intents)
 
@@ -6,8 +6,6 @@ channel_set = []
 art_dict = {}
 repost_count = 0
 pause=False
-def build_url(message):
-    return "https://discord.com/channels/"+str(message.guild.id)+"/"+str(message.channel.id)+"/"+str(message.id)
 
 async def set_status(client):
     global art_dict
@@ -18,24 +16,6 @@ def repost_embed(art_id):
     embed =  discord.Embed(title="🚨 Repost! 🚨",description="Check [here](" + art_dict[art_id][0]+") for the original. This message will delete in one minute.",color=0x0366fc)
     embed.set_image(url="https://cdn.discordapp.com/attachments/994668648742531182/1030958839366950952/Shubat.gif")
     return embed
-
-def pull_twitter_id(message):
-    message_content = message.content
-    id_start = message_content.find("status/")
-    cur_substr = message_content[id_start+7:]
-    cur_substr = cur_substr.split("?")[0]
-    cur_substr = cur_substr.split("/")[0]
-    cur_substr = "t" + cur_substr + "-" + str(message.channel.id)
-    return cur_substr
-
-def pull_pixiv_id(message):
-    message_content = message.content
-    id_start = message_content.find("artworks/")
-    cur_substr = message_content[id_start+9:]
-    cur_substr = cur_substr.split("?")[0]
-    cur_substr = cur_substr.split("/")[0]
-    cur_substr = "p" + cur_substr + "-" + str(message.channel.id)
-    return cur_substr
 
 async def repost_detect(art_id,message):
     print("b")
@@ -78,10 +58,10 @@ async def on_ready():
         channel = client.get_channel(int(ch))
         async for message in channel.history(limit = None):
             if("twitter.com" in message.content):
-                art_id = pull_twitter_id(message)
+                art_id = utils.pull_twitter_id(message)
                 build_dict(art_id,message)
             if("pixiv.net" in message.content):
-                art_id = pull_pixiv_id(message)
+                art_id = utils.pull_pixiv_id(message)
                 build_dict(art_id,message)           
     print("total reposts: "+str(repost_count))
     print("Finished building art post list!")
@@ -90,12 +70,12 @@ async def on_ready():
 
 @client.event
 async def on_message_delete(message):
-    msgurl = build_url(message)
+    msgurl = utils.build_url(message)
     art_id="dummy_key"
     if("twitter.com" in message.content):
-        art_id = pull_twitter_id(message)
+        art_id = utils.pull_twitter_id(message)
     if("pixiv" in message.content):
-        art_id = pull_pixiv_id(message)
+        art_id = utils.pull_pixiv_id(message)
     
     if(art_id in art_dict.keys()):
         print(msgurl)
@@ -117,11 +97,11 @@ async def on_message(message):
             if(not pause):
                 if("twitter.com" in message.content):
                     print("c")
-                    art_id = pull_twitter_id(message)
+                    art_id = utils.pull_twitter_id(message)
                     await repost_detect(art_id,message)
                     await set_status(client)
                 if("pixiv" in message.content):
-                    art_id = pull_pixiv_id(message)
+                    art_id = utils.pull_pixiv_id(message)
                     await repost_detect(art_id,message)
                     await set_status(client)
             print(message.content)
