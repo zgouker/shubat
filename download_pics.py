@@ -14,7 +14,7 @@ async def on_ready():
     now = datetime.now().replace(tzinfo=local_tz)
 
     print("Current time: " + now.strftime("%m/%d/%Y, %H:%M:%S"))
-    cutoff = now - timedelta(weeks=1)
+    cutoff = now - timedelta(weeks=20)
     print("Cutoff time: " + cutoff.strftime("%m/%d/%Y, %H:%M:%S"))
     print("Building stats...")
     for ch in channel_set:
@@ -22,19 +22,22 @@ async def on_ready():
         channel = client.get_channel(int(ch))
         async for message in channel.history(limit = None):
             created_at = message.created_at.replace(tzinfo=local_tz)
-            if(created_at<cutoff):
-                break
-            try:
-                f = open(f"download/{str(message.channel.id)}/{str(message.id)}.png",'wb')
-                if(len(message.embeds)>0):
-                    url=message.embeds[0].image.url
-                else:
-                    url=message.attachments[0].url
-                f.write(requests.get(url).content)
-                f.close()
-                print(message.id)
-            except Exception as e:
-                print(str(e))
+            if(message.id>968998413477748786 and channel.id==915394280510619649):
+                print("passing")
+            else:
+                try:
+                    max_count = max(len(message.embeds),len(message.attachments))
+                    for i in range(0,max_count):
+                        f = open(f"download/{str(message.channel.id)}/{str(message.id)}_{i}.png",'wb')
+                        if(len(message.embeds)>0):
+                            url=message.embeds[i].image.url
+                        else:
+                            url=message.attachments[i].url
+                        f.write(requests.get(url).content)
+                        f.close()
+                    print(message.id,message.created_at)
+                except Exception as e:
+                    print(str(e))
 
     print("done")
     exit()
