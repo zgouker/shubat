@@ -6,3 +6,5 @@ nohup.out
 *.db-journal
 __pycache__/
 __pycache__/*
+testing/
+testing/*
