@@ -2,9 +2,8 @@
 
 ## [Unreleased]
 
-- Created changelog
-
 ## 1.2.1 - 2022-11-28
+- Created changelog
 - Patch bug with incorrect tracking date for art messages
 
 ## 1.2.0 - 2022-11-xx
