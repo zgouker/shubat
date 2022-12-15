@@ -4,7 +4,10 @@
 
 - Created changelog
 
-## 1.2.0
+## 1.2.1 - 2022-11-28
+- Patch bug with incorrect tracking date for art messages
+
+## 1.2.0 - 2022-11-xx
 
 - Ported backend from python dictionaries to sqlite database
 - Refactored repost police bot to use sqlite backend
@@ -15,10 +18,10 @@
 - Added information of poster and characters in repost message
 - Factored some common code into utils library
 
-## 1.1.0
+## 1.1.0 - 2022-10-xx
 
 - to be backfilled
 
-## 1.0.0
+## 1.0.0 - 2022-10-xx
 
 - To be backfilled
