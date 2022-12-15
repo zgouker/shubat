@@ -75,7 +75,7 @@ def add_art(art_id,message):
                             {message.guild.id},
                             {message.channel.id},
                             '{poster}',
-                            '{created_at}')
+                            '{created_at.strftime("%m-%d-%Y %H:%M:%S")}')
                             """
         cursor.execute(command)
         print(f"{art_id} added")
