@@ -1,8 +1,8 @@
 import sqlite3,csv,os
 
 #initialize db and cursor
-os.remove("art_prod.db")
-con = sqlite3.connect("art_prod.db")
+os.remove("art_test.db")
+con = sqlite3.connect("art_test.db")
 cursor = con.cursor()
 
 #create tables
@@ -20,6 +20,11 @@ cursor.execute("""CREATE TABLE art_character (
                     art_id TEXT,
                     character_id INTEGER,
                     PRIMARY KEY (art_id, character_id));""")
+cursor.execute("""CREATE TABLE repost_messages (
+                    message_id INTEGER PRIMARY KEY,
+                    reposter STRING,
+                    repost_date DATE,
+                    art_id TEXT);""")
 # cursor.execute("""CREATE TABLE websites (
 #                     site_id INTEGER PRIMARY KEY,
 #                     site_name TEXT);""")

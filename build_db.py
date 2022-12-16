@@ -114,7 +114,7 @@ try:
     print("Channels to watch: "+ str(channel_set))
     print("Settings loaded!")
     print("Connecting to db...")
-    con = sqlite3.connect("art.db")
+    con = sqlite3.connect("art_prod.db")
     cursor = con.cursor()
     print("Connected to db!")
 
