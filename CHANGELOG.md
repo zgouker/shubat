@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+- Added database feature to track reposts
+- Added custom report message when self-reposting
 
 ## 1.2.1 - 2022-11-28
 - Created changelog

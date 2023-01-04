@@ -8,10 +8,23 @@ client = discord.Client(intents=intents)
 channel_set = []
 pause=False
 
-def repost_embed(art_id):
+def get_characters_from_string(content):
+    global space_names
+    splitter = content.replace(",","").replace("\n"," ").split(" ")
+    splitter = [s.lower() for s in splitter if ("http" not in s and s != "" and s != "||")]
+
+    for spaced_name in space_names:
+        segments = spaced_name.split(" ")
+        if(all(segment in splitter for segment in segments)):
+            splitter = [s for s in splitter if s not in segments]
+            splitter.append("".join(segments))
+
+    return splitter
+
+def repost_embed(message,art_id):
     resp = cursor.execute(f"SELECT poster,message_id,server_id,channel_id FROM art_messages WHERE art_id='{art_id}';")
     fetchone = resp.fetchone()
-
+    reposter = message.author.name
 
     (poster,message_id,server_id,channel_id) = fetchone
 
@@ -27,8 +40,22 @@ def repost_embed(art_id):
     print(char_string)
     print((poster,message_id,server_id,channel_id))
 
-    embed =  discord.Embed(title="🚨 Repost! 🚨",description=f"{poster} posted this ({char_string}) before. Check [here](https://discord.com/channels/{server_id}/{channel_id}/{message_id}) for the original. This message will delete in one minute.",color=0x0366fc)
-    embed.set_image(url="https://cdn.discordapp.com/attachments/994668648742531182/1030958839366950952/Shubat.gif")
+    message_builder = ""
+    title = "🚨 Repost! 🚨" #default
+    pic_url = "https://cdn.discordapp.com/attachments/994668648742531182/1030958839366950952/Shubat.gif" #default
+    if(reposter==poster):
+        #self repost lul
+        message_builder = message_builder + f"Bro, YOU posted this ({char_string}) before. "
+        title = "🚨 Self-Repost! 🚨"
+        pic_url = "https://cdn.discordapp.com/attachments/158803497704226816/1053094428874645586/383.gif"
+    else:
+        message_builder = message_builder + f"{poster} posted this ({char_string}) before. "
+
+
+    message_builder = message_builder + f"Check [here](https://discord.com/channels/{server_id}/{channel_id}/{message_id}) for the original. This message will delete in one minute."
+
+    embed =  discord.Embed(title=title,description=message_builder,color=0x0366fc)
+    embed.set_image(url=pic_url)
     return embed
 
 async def set_status(client):
@@ -54,19 +81,11 @@ def get_char_id(character_name):
     return char_id
 
 def add_art(art_id,message):
-    global con, cursor, space_names
+    global con, cursor
     local_tz = pytz.timezone('US/Eastern')
     created_at = message.created_at.replace(tzinfo=local_tz)
     poster = message.author.name
-    splitter = message.content.replace(",","").replace("\n"," ").split(" ")
-    splitter = [s.lower() for s in splitter if ("http" not in s and s != "" and s != "||")]
-
-    for spaced_name in space_names:
-        segments = spaced_name.split(" ")
-        if(all(segment in splitter for segment in segments)):
-            splitter = [s for s in splitter if s not in segments]
-            splitter.append("".join(segments))
-
+    character_list = get_characters_from_string(message.content)
     try:
         command = f"""INSERT INTO art_messages (art_id,message_id,server_id,channel_id,poster,post_date)
                         VALUES (
@@ -75,14 +94,14 @@ def add_art(art_id,message):
                             {message.guild.id},
                             {message.channel.id},
                             '{poster}',
-                            '{created_at.strftime("%m-%d-%Y %H:%M:%S")}')
+                            '{created_at.strftime("%y-%m-%d %H:%M:%S")}')
                             """
         cursor.execute(command)
         print(f"{art_id} added")
     except Exception as e:
         print(f"couldnt insert\n{str(e)}")
 
-    for character in splitter:
+    for character in character_list:
 
         #check if in db
         
@@ -101,14 +120,23 @@ async def repost_detect(art_id,message):
     global cursor,con
     #check if in db
 
-    resp = cursor.execute(f"SELECT message_id,channel_id,server_id FROM art_messages WHERE art_id='{art_id}';")
+    resp = cursor.execute(f"SELECT poster,message_id,channel_id,server_id FROM art_messages WHERE art_id='{art_id}';")
     response_post = resp.fetchone();
 
     if(response_post is None):
         add_art(art_id,message)
     else:
-        print("repost")
-        msg = await message.channel.send(embed=repost_embed(art_id))
+
+        #extract info
+        local_tz = pytz.timezone('US/Eastern')
+        created_at = message.created_at.replace(tzinfo=local_tz)
+        reposter = message.author.name       
+
+        msg = await message.channel.send(embed=repost_embed(message,art_id))
+        cursor.execute(f"""INSERT INTO repost_messages (message_id,reposter,repost_date,art_id)
+                                VALUES ('{message.id}','{reposter}','{created_at.strftime("%m-%d-%Y %H:%M:%S")}','{art_id}')""")
+        con.commit();
+
         await asyncio.sleep(5)
         await message.delete()
         await asyncio.sleep(60)
